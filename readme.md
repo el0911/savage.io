@@ -4,9 +4,7 @@ Building a machine learnign model for node.js servers mainly because python has 
 
 npm install @king__somto/savage
 
-/////for now it can only solve problems with that have an inut of one dimension
-
-
+for now it can only solve problems with that have an inut of one dimension
 
 ```
 
