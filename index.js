@@ -111,6 +111,7 @@ class Savage {
             // params[1] = params[1] - 2 / data.x.length * (data.y[i] - ((params2[0] * data.x[i]) + params2[1]))
 
             for (let j = 0; j < dimensions-1; j++) {
+              ////solving every equation 
 
               const x = 'x' + (j+1)
               const w = 'w' + (j+1)
@@ -124,18 +125,12 @@ class Savage {
               // console.log(d);
               
               params[j] = params[j] - expressions_list[j].eval(d).valueOf()
-
+              params[dimensions - 1] = params[dimensions - 1] - expressions_list[dimensions - 1].eval(d).valueOf()
             }
 
-            
-            params[dimensions - 1] = params[dimensions - 1] - expressions_list[dimensions - 1].eval({
-              n: data.x.length,
-              x1: data.x[i],
-              w1: params2[0],
-              c: params2[1],
-              y: data.y[i]
-            }).valueOf()
 
+            
+            
           }
           params[0] = params2[0] - (lr * params[0]);
           params[1] = params2[1] - (lr * params[1]);

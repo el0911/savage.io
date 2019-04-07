@@ -1,10 +1,11 @@
 Building a machine learnign model for node.js servers mainly because python has too many good libraries feel free to help me out.
 
 
-
+```
 npm install @king__somto/savage
+```
 
-for now it can only solve problems with that have an inut of one dimension
+for now it can only solve problems with that have an input of one dimension
 
 ```
 
