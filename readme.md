@@ -6,6 +6,9 @@ npm install @king__somto/savage
 
 /////for now it can only solve problems with that have an inut of one dimension
 
+```
+pip install tensorflow
+```
 var data = {
     x:[0,1,2,3,4,5,6,7,8,9],
     y:[0,1,2,3,4,5,6,7,8,9]
