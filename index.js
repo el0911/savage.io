@@ -8,7 +8,7 @@ class Savage {
 
   }
 
-  Linear_Regression(data, label, lossfunction) {
+  linearRegression(data, label, lossfunction) {
     data = math.matrix(data)
     let dimensions = math.size(data).valueOf();
     if (dimensions.length > 1) {
