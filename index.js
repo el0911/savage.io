@@ -5,7 +5,11 @@ class Savage {
 
   constructor() {
     console.log('savage model initailized!!');
+    this.data  = []
+  }
 
+  loadData(){
+    
   }
 
   linearRegression(data, label, lossfunction) {
@@ -57,7 +61,7 @@ class Savage {
         let element = math.multiply(0, math.range(0, dimensions)).valueOf()
 
         for (let i = 0; i < 1000; i++) {
-          element = this_.loss_functions()['mse']['compute_gradient'](element, data, 0.01, expression, dimensions)
+          element = this_.lossFunctions('mse',element, data, 0.01, expression, dimensions)
         }
 
 
@@ -73,7 +77,7 @@ class Savage {
 
   }
 
-  loss_functions(lossfunction) {
+  lossFunctions( lossFunction,element, data, lr, expression, dimensions ) {
     // optimizers to write
     // 1. Binary Cross Entropy 
     // 2. Negative Log Likelihood
@@ -81,7 +85,7 @@ class Savage {
     // 4. Soft Margin Classifier
 
 
-    return {
+    const lossFunctionsDict =  {
       'mse': {
         '__function__': function (predicted, real_value) {
           //me an squared error
@@ -109,31 +113,43 @@ class Savage {
           for (var i = 0; i < data.x.length; i++) {
             // params[0] = params[0] - 2 / data.x.length * data.x[i] * (data.y[i] - ((params2[0] * data.x[i]) + params2[1]))
             // params[1] = params[1] - 2 / data.x.length * (data.y[i] - ((params2[0] * data.x[i]) + params2[1]))
+            let d = {}
 
-            for (let j = 0; j < dimensions-1; j++) {
+            for (let j = 0; j < dimensions - 1; j++) {
               ////solving every equation 
 
-              const x = 'x' + (j+1)
-              const w = 'w' + (j+1)
-              let d = {}
+              const x = 'x' + (j + 1)
+              const w = 'w' + (j + 1)
 
-              d[x] = data.x[i]
+              d[x] = data.x[i][j]
               d['n'] = data.x.length
-              d[w] = params2[0]
-              d['c'] = params2[1]
+              d[w] = params2[j]
+              d['c'] = params2[dimensions - 1]
               d['y'] = data.y[i]
-              // console.log(d);
-              
+
+
+            }
+    
+// console.log(params2);
+
+            for (let j = 0; j < dimensions; j++) {
+
+              // if(j==3){
+              //   console.log( expressions_list[j].eval(d).valueOf() );
+              // }
+
               params[j] = params[j] - expressions_list[j].eval(d).valueOf()
-              params[dimensions - 1] = params[dimensions - 1] - expressions_list[dimensions - 1].eval(d).valueOf()
+
+              // params[dimensions - 1] = params[dimensions - 1] - expressions_list[dimensions - 1].eval(d).valueOf()
+
             }
 
 
-            
-            
           }
-          params[0] = params2[0] - (lr * params[0]);
-          params[1] = params2[1] - (lr * params[1]);
+
+          for (let j = 0; j < dimensions; j++) {
+            params[j] = params2[j] - (lr * params[j]);
+          }
           return params
         }
 
@@ -145,6 +161,8 @@ class Savage {
         //smooth abs error
       }
     }
+
+    return lossFunctionsDict[lossFunction]['compute_gradient'](element, data, lr, expression, dimensions)
 
   }
 
