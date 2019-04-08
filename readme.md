@@ -5,7 +5,7 @@ Building a machine learning tool for node.js servers mainly because python has t
 npm install @king__somto/savage
 ```
 
-for now it can  solve problems that have multiple 2 dimensions 
+for now it can  solve problems that have  2 dimensions 
 
 ```Javascript
 const savage = require('./index')
