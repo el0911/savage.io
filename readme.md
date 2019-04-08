@@ -38,11 +38,14 @@ let savage_ = new savage()
 var linear = savage_.linearRegression(data['x'], data['y'], 'mse',0.01,1000)
 console.log(linear);
 
+// savage model initailized!!
+// x1 * w1 + x2 * w2 + x3 * w3 + x4 * w4 + c
+// [ 0.2523187453008285,
+//   0.09433765046271818,
+//   0.09433765046271818,
+//   -0.8990083809584495,
+//   0.8155537130371335 ]
 
-
-//savage model initailized!!
-//x1 * w1 + c
-//[ 7.6015539732441635, 0.7600969072169218 ]
 
 ```
 
