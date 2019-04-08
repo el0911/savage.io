@@ -48,9 +48,3 @@ console.log(linear);
 
 
 ```
-
-
-
-w1 being 7.6015539732441635
-
-and c being  0.7600969072169218
