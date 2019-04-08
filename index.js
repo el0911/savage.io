@@ -5,14 +5,14 @@ class Savage {
 
   constructor() {
     console.log('savage model initailized!!');
-    this.data  = []
+    this.data  = ''
   }
 
   loadData(){
-    
+
   }
 
-  linearRegression(data, label, lossfunction) {
+  linearRegression(data, label, lossfunction,lr,itterations) {
     data = math.matrix(data)
     let dimensions = math.size(data).valueOf();
     if (dimensions.length > 1) {
@@ -39,7 +39,7 @@ class Savage {
 
 
 
-    return this.optimizers('gradient_descent', data, dimensions, expression)
+    return this.optimizers('gradient_descent', data, dimensions, expression,lr,itterations)
   }
 
 
@@ -53,15 +53,15 @@ class Savage {
     return math.divide(math.subtract(data, math.min(data)), math.subtract(math.max(data), math.min(data)))
   }
 
-  optimizers(optimizer, data, dimensions, expression) {
+  optimizers(optimizer, data, dimensions, expression,lr,itterations) {
     const this_ = this
     const optimer_dic = {
 
       'gradient_descent': function () {
         let element = math.multiply(0, math.range(0, dimensions)).valueOf()
 
-        for (let i = 0; i < 1000; i++) {
-          element = this_.lossFunctions('mse',element, data, 0.01, expression, dimensions)
+        for (let i = 0; i < itterations; i++) {
+          element = this_.lossFunctions('mse',element, data, lr, expression, dimensions)
         }
 
 
