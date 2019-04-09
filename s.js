@@ -11,6 +11,7 @@ var data = {
     y: [0, 1, 0, 1, 0, 1, 0, 1]/////data set created to differentiate even and odd numbers 0 for odd 1 for even
 }
 
+
 // var data = {
 //     x:[[0],
 //         [1],
@@ -24,6 +25,23 @@ var data = {
 //         [9]],
 //     y:[0,1,2,3,4,5,6,7,8,9]
 // }
+
 let savage_ = new savage()
-var linear = savage_.linearRegression(data['x'], data['y'],'mse',0.01,1000)
+savage_.loadDataFromCSV('diabetes.csv',true)
+savage_.head()
+///data is stored as savage_.data
+// var linear = savage_.linearRegression(data['x'], data['y'],'mse',0.01,1000)
+// console.log(linear);
+let x = []
+let y = []
+for (let i = 0; i < savage_.data.length; i++) {
+    const element =  savage_.data[i];
+
+    y.push(element[8])
+    x.push(element.slice(0,8))
+}
+
+var linear = savage_.linearRegression(x, y,'mse',0.01,100)
 console.log(linear);
+
+

@@ -1,6 +1,6 @@
 {
   "name": "@king__somto/savage",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "csvtojson": "^2.0.8",
     "mathjs": "^5.8.0"
   }
 }

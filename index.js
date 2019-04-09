@@ -1,18 +1,61 @@
 
 const math = require('mathjs')
+const fs = require('fs');
+const csv = require('csvtojson')
+// const request=require('request')
+
+
 
 class Savage {
 
   constructor() {
     console.log('savage model initailized!!');
-    this.data  = ''
+    this.data = ''
   }
 
-  loadData(){
+  loadDataFromCSV(link, removeFirstRow) {
+
+    this.data = fs.readFileSync(link, { encoding: 'utf8' }).split('\n');
+    if (removeFirstRow) {
+      this.data.shift()
+    }
+
+    for (let i = 0; i < this.data.length; i++) {
+
+      this.data[i] = this.data[i].split(',')
+
+    }
+
 
   }
 
-  linearRegression(data, label, lossfunction,lr,itterations) {
+  // loadDataFromURL(link,removeFirstRow){
+  //   csv()
+  //   .fromStream(request.get(link))
+  //   .subscribe((json)=>{
+  //       return new Promise((resolve,reject)=>{
+  //           // long operation for each json e.g. transform / write into database.
+  //       })
+  //   },onError,onComplete)
+  // }
+
+  head(number) {
+    const data = this.data
+
+    if (!number) {
+      number = 5
+    }
+
+
+    for (let i = 0; i < number; i++) {
+
+      console.log(data[i]);
+    }
+  }
+
+
+
+  linearRegression(data, label, lossfunction, lr, itterations) {
     data = math.matrix(data)
     let dimensions = math.size(data).valueOf();
     if (dimensions.length > 1) {
@@ -39,7 +82,7 @@ class Savage {
 
 
 
-    return this.optimizers('gradient_descent', data, dimensions, expression,lr,itterations)
+    return this.optimizers('gradient_descent', data, dimensions, expression, lr, itterations)
   }
 
 
@@ -53,7 +96,7 @@ class Savage {
     return math.divide(math.subtract(data, math.min(data)), math.subtract(math.max(data), math.min(data)))
   }
 
-  optimizers(optimizer, data, dimensions, expression,lr,itterations) {
+  optimizers(optimizer, data, dimensions, expression, lr, itterations) {
     const this_ = this
     const optimer_dic = {
 
@@ -61,7 +104,9 @@ class Savage {
         let element = math.multiply(0, math.range(0, dimensions)).valueOf()
 
         for (let i = 0; i < itterations; i++) {
-          element = this_.lossFunctions('mse',element, data, lr, expression, dimensions)
+          console.log('itter ' + i);
+
+          element = this_.lossFunctions('mse', element, data, lr, expression, dimensions)
         }
 
 
@@ -77,7 +122,7 @@ class Savage {
 
   }
 
-  lossFunctions( lossFunction,element, data, lr, expression, dimensions ) {
+  lossFunctions(lossFunction, element, data, lr, expression, dimensions) {
     // optimizers to write
     // 1. Binary Cross Entropy 
     // 2. Negative Log Likelihood
@@ -85,7 +130,7 @@ class Savage {
     // 4. Soft Margin Classifier
 
 
-    const lossFunctionsDict =  {
+    const lossFunctionsDict = {
       'mse': {
         '__function__': function (predicted, real_value) {
           //me an squared error
@@ -95,16 +140,23 @@ class Savage {
           const h = math.parse(expression)
 
           let expressions_list = []
-          for (let i = 1; i < dimensions; i++) {
-            const dh = math.derivative(h, 'w' + i)
-            const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-            // console.log(new_.toString());
-            expressions_list.push(new_)
+          for (let i = 1; i <= dimensions; i++) {
+            if (i == dimensions) {
+
+              const dh = math.derivative(h, 'c')
+              const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
+              // console.log(new_.toString());
+              expressions_list.push(new_)
+
+            }
+            else {
+              const dh = math.derivative(h, 'w' + i)
+              const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
+              // console.log(new_.toString());
+              expressions_list.push(new_)
+            }
           }
-          const dh = math.derivative(h, 'c')
-          const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-          // console.log(new_.toString());
-          expressions_list.push(new_)
+
           // console.log(h.eval({ 'x1': 3,'w1':5,'c':6 }));
 
 
@@ -115,33 +167,31 @@ class Savage {
             // params[1] = params[1] - 2 / data.x.length * (data.y[i] - ((params2[0] * data.x[i]) + params2[1]))
             let d = {}
 
-            for (let j = 0; j < dimensions - 1; j++) {
+            for (let j = 0; j < dimensions ; j++) {
               ////solving every equation 
 
               const x = 'x' + (j + 1)
               const w = 'w' + (j + 1)
 
+             if( j < (dimensions-1)){
               d[x] = data.x[i][j]
               d['n'] = data.x.length
               d[w] = params2[j]
               d['c'] = params2[dimensions - 1]
               d['y'] = data.y[i]
+             }
 
+              
 
             }
-    
-// console.log(params2);
+
 
             for (let j = 0; j < dimensions; j++) {
 
-              // if(j==3){
-              //   console.log( expressions_list[j].eval(d).valueOf() );
-              // }
+            
+              params[j] = params[j] - expressions_list[j].compile(d)
 
-              params[j] = params[j] - expressions_list[j].eval(d).valueOf()
-
-              // params[dimensions - 1] = params[dimensions - 1] - expressions_list[dimensions - 1].eval(d).valueOf()
-
+        
             }
 
 
