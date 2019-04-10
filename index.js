@@ -188,8 +188,8 @@ class Savage {
 
             for (let j = 0; j < dimensions; j++) {
 
-            
-              params[j] = params[j] - expressions_list[j].compile(d)
+              const math_function = expressions_list[j].compile().valueOf()
+              params[j] = params[j] - math_function.eval(d)
 
         
             }
