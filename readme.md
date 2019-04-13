@@ -75,3 +75,52 @@ savage model initailized!!
 //   0.014562232104820869,
 //   0.29152134549618924 ]
 ```
+Building an ANN with the library
+
+``` Javascript
+const {Savage,Savage_model} =  require('./index.js')
+const mod = new Savage_model()
+let savage_ = new Savage()
+savage_.loadDataFromCSV('diabetes.csv',true)
+savage_.head()
+
+let x = []
+let y = []
+for (let i = 0; i < savage_.data.length; i++) {
+    const element =  savage_.data[i];
+
+    y.push([element[8]])
+    x.push(element.slice(0,8))
+}
+
+mod.addDense({
+    'output':4,
+    'input':4,
+    'activation':'sigmoid'
+})
+
+
+
+mod.addDense({
+    'output':3,
+    'activation':'softmax'
+})
+
+mod.addDense({
+    'output':4,
+    'activation':'softmax'
+})
+
+mod.addDense({
+    'output':1,
+    'activation':'softmax'
+})
+
+
+mod.run(data.x,data.y)
+
+mod.predict([1,0,1,0])
+
+
+
+```
