@@ -124,3 +124,19 @@ mod.predict([1,0,1,0])
 
 
 ```
+
+Now creating a model thats awesome now lets save it so we dont have to retrain all the time
+
+``` javascript
+///after training call
+mod.saveModel('fileName.txt')
+```
+
+Now to load model 
+
+``` javascript
+const model = new Savage_model()
+model.loadModel('fileNames.txt')
+let ans = model.predict([0,1,1,0])
+console.log(ans);
+```

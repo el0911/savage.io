@@ -264,14 +264,14 @@ class Savage_model {
       'output': output,
       'weights': math.random([input, output]),////creatte a random matrix
       'bias': 0,////same
-      'index': this.model.length-1
+      'index': this.model.length - 1
     })
   }
 
-  run(inputs, labels) {
+  run(inputs, labels, itterations) {
     this.labels = labels
     this.inputs = inputs
-    for (let index = 0; index < 3000; index++) {
+    for (let index = 0; index < itterations; index++) {
       this.feedForWard(inputs)
       this.backPropagation(index)
     }
@@ -297,7 +297,7 @@ class Savage_model {
     for (let i = this.model.length - 1; i >= 0; i--) {
       if (i == this.model.length - 1) {
         error = math.subtract(this.labels, this.layers[this.layers.length - 1])
-        if (index%10==0) {
+        if (index % 100 == 0) {
           console.log('error is = ', math.sum(math.abs(error)));
         }
       }
@@ -334,9 +334,25 @@ class Savage_model {
 
   }
 
-  predict(sample){
+  predict(sample) {
     let ans = this.feedForWard(sample)
-    console.log(ans[ans.length-1]); 
+    return ans[ans.length - 1];
+  }
+
+  modelSave(fileName) {
+    let model = this.model
+    let file = fs.createWriteStream(fileName);
+    model = JSON.stringify(model)
+    file.on('error', function(err) { /* error handling */ });
+    file.write(model);
+    file.end()
+  }
+
+  loadModel(modelDirectory){
+    let model = fs.readFileSync(modelDirectory, { encoding: 'utf8' })
+    model = JSON.parse(model)
+    this.model  = model
+    console.log('model loaded into object!')
   }
 
   feedForWard(inputs) {
