@@ -8,8 +8,12 @@ const csv = require('csvtojson')
 
 class Savage {
 
+  model() {
+    console.log('model initialised!!');
+  }
+
   constructor() {
-    console.log('savage model initailized!!');
+    console.log('savage library initailized!!');
     this.data = ''
   }
 
@@ -55,6 +59,7 @@ class Savage {
 
 
 
+
   linearRegression(data, label, lossfunction, lr, itterations) {
     data = math.matrix(data)
     let dimensions = math.size(data).valueOf();
@@ -92,7 +97,8 @@ class Savage {
 
 
   normalise(data) {
-    'data normalysed'
+    console.log('data normalysed');
+
     return math.divide(math.subtract(data, math.min(data)), math.subtract(math.max(data), math.min(data)))
   }
 
@@ -167,21 +173,21 @@ class Savage {
             // params[1] = params[1] - 2 / data.x.length * (data.y[i] - ((params2[0] * data.x[i]) + params2[1]))
             let d = {}
 
-            for (let j = 0; j < dimensions ; j++) {
+            for (let j = 0; j < dimensions; j++) {
               ////solving every equation 
 
               const x = 'x' + (j + 1)
               const w = 'w' + (j + 1)
 
-             if( j < (dimensions-1)){
-              d[x] = data.x[i][j]
-              d['n'] = data.x.length
-              d[w] = params2[j]
-              d['c'] = params2[dimensions - 1]
-              d['y'] = data.y[i]
-             }
+              if (j < (dimensions - 1)) {
+                d[x] = data.x[i][j]
+                d['n'] = data.x.length
+                d[w] = params2[j]
+                d['c'] = params2[dimensions - 1]
+                d['y'] = data.y[i]
+              }
 
-              
+
 
             }
 
@@ -191,7 +197,7 @@ class Savage {
               const math_function = expressions_list[j].compile().valueOf()
               params[j] = params[j] - math_function.eval(d)
 
-        
+
             }
 
 
@@ -219,7 +225,138 @@ class Savage {
 
 };
 
-module.exports = Savage
+
+class Savage_model {
+  constructor() {
+    console.log('savage model initialized');
+    this.model = []
+    this.bias = []
+    this.activations = ['sigmoid', 'softmax']
+  }
+
+  addDense(config) {
+    let output = config['output']
+    let input = config['input']
+    let activation = config['activation']
+    if (!activation) {
+      throw Error('you must pass in an activation function')
+    }
+
+    if (!this.activations.includes(activation)) {
+      throw Error('Unrecognised activation function')
+    }
+
+    if (!input) {
+      if (!this.model.length < 1) {
+        ///means this isnt the input layer so we can move on
+        input = this.model[this.model.length - 1]['output']
+      }
+      else {
+        throw Error('you must define input dimension for first layer')
+      }
+    }
+
+    if (this.model.length == 0) this.input = input
+
+    this.model.push({
+      'inputs': input,
+      'activation': activation,
+      'output': output,
+      'weights': math.random([input, output]),////creatte a random matrix
+      'bias': 0,////same
+      'index': this.model.length-1
+    })
+  }
+
+  run(inputs, labels) {
+    this.labels = labels
+    this.inputs = inputs
+    for (let index = 0; index < 3000; index++) {
+      this.feedForWard(inputs)
+      this.backPropagation(index)
+    }
+  }
+
+  sigmoid(x) {
+
+    return math.dotDivide(1, math.add(1, math.exp(math.multiply(-1, x))))
+  }
+
+  sigmoidPrime(s) {
+    return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
+  }
+
+  backPropagation(index) {
+
+    let input = this.input
+    //  this.sigmoidPrime(math.multiply(input,this.model[0].weights))
+    let error = []
+    let delta = []
+
+    ///since its backwards we start at the end
+    for (let i = this.model.length - 1; i >= 0; i--) {
+      if (i == this.model.length - 1) {
+        error = math.subtract(this.labels, this.layers[this.layers.length - 1])
+        if (index%10==0) {
+          console.log('error is = ', math.sum(math.abs(error)));
+        }
+      }
+      else {
+
+        error = math.multiply(delta[delta.length - 1], math.transpose(this.model[i + 1].weights))
+
+      }
+
+      let layer_delta = math.dotMultiply(error, this.sigmoidPrime(this.layers[i + 1]))
+      delta.push(layer_delta)
+      ///update model weights
+      this.model[i].weights = math.add(this.model[i].weights, math.multiply(math.transpose(this.layers[i]), layer_delta))
+
+
+
+    }
+
+
+    // l1 = nonlin(np.dot(l0, syn0))
+    // l2 = nonlin(np.dot(l1, syn1))
+
+    // l2_error = y - l2
+    // if (j % 10000) == 0:
+    //     print("Error: " + str(np.mean(np.abs(l2_error))))
+
+    // l2_delta = l2_error * nonlin(l2, deriv=True)
+    // l1_error = l2_delta.dot(syn1.T)
+    // l1_delta = l1_error * nonlin(l1, deriv=True)
+
+    // syn1 += l1.T.dot(l2_delta)
+    // syn0 += l0.T.dot(l1_delta)
+
+
+  }
+
+  predict(sample){
+    let ans = this.feedForWard(sample)
+    console.log(ans[ans.length-1]); 
+  }
+
+  feedForWard(inputs) {
+    let layers = []
+    layers.push(inputs)
+    for (let i = 0; i < this.model.length; i++) {
+      const element = this.model[i];
+      inputs = layers[layers.length - 1]
+      layers.push(this.sigmoid(math.add(math.multiply(inputs, element.weights), element.bias)))
+    }
+
+    //so i try and run every item in a model
+    this.layers = layers
+    return this.layers ///this is just for the predict function
+  }
+
+
+}
+
+module.exports = { Savage, Savage_model }
 
 
 // // work with an expression tree, evaluate results
