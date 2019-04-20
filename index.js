@@ -259,7 +259,7 @@ class Savage_model {
     if (this.model.length == 0) this.input = input
 
     this.model.push({
-      'inputs': input,
+      'input': input,
       'activation': activation,
       'output': output,
       'weights': math.random([input, output]),////creatte a random matrix
@@ -268,70 +268,87 @@ class Savage_model {
     })
   }
 
-  run(inputs, labels, itterations) {
+  run(input, labels, itterations, batch) {
     this.labels = labels
-    this.inputs = inputs
+    this.input = input
     for (let index = 0; index < itterations; index++) {
-      this.feedForWard(inputs)
-      this.backPropagation(index)
+      // console.log( labels.length/batch);
+
+      ///here i divide the datset into batches to train 
+      let trainedItemCheck = 0 //variable to check  how many items ive passed through to train 
+      // for (let i = 0; i <= parseInt(labels.length/batch); i++) {
+      ///so i first send the elements batch by batch
+      this.feedForWard(this.input)
+      this.backPropagation(index, 1, batch)
+
+      // }
+      if (index % 10 == 0) {
+        console.log("Itterration " + index);
+      }
     }
   }
 
   sigmoid(x) {
-
-    return math.dotDivide(1, math.add(1, math.exp(math.multiply(-1, x))))
+    return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
   sigmoidPrime(s) {
     return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
   }
 
-  backPropagation(index) {
+  backPropagation(Itterration, batchPosition, batchSize) {
 
     let input = this.input
     //  this.sigmoidPrime(math.multiply(input,this.model[0].weights))
     let error = []
     let delta = []
 
-    ///since its backwards we start at the end
-    for (let i = this.model.length - 1; i >= 0; i--) {
-      if (i == this.model.length - 1) {
-        error = math.subtract(this.labels, this.layers[this.layers.length - 1])
-        if (index % 100 == 0) {
-          console.log('error is = ', math.sum(math.abs(error)));
-        }
-      }
-      else {
+    let currentOutPutError = math.subtract(this.layers[this.layers.length - 1], this.labels)
 
-        error = math.multiply(delta[delta.length - 1], math.transpose(this.model[i + 1].weights))
-
-      }
-
-      let layer_delta = math.dotMultiply(error, this.sigmoidPrime(this.layers[i + 1]))
-      delta.push(layer_delta)
-      ///update model weights
-      this.model[i].weights = math.add(this.model[i].weights, math.multiply(math.transpose(this.layers[i]), layer_delta))
-
-
-
+    // handling input layer
+    error = currentOutPutError
+    // console.log(this.labels.length);
+    if (Itterration % 100 == 0) {
+      console.log('error is = ', math.sum(math.abs(error)));
     }
+    let derivativeOfSigmoid = this.sigmoidPrime(this.layers[this.layers.length - 1])
+
+    let previousLayer = this.layers[this.layers.length - 2]
+    // console.log(math.size(error));
+    // console.log(math.size(previousLayer));
+    let outPutLayerIndex = this.model.length - 1
+    this.model[outPutLayerIndex].weights = math.subtract(this.model[outPutLayerIndex].weights, math.multiply(math.transpose(previousLayer), math.dotMultiply(error, derivativeOfSigmoid)))
+
+    ///since its backwards we start at the end
+    for (let i = this.model.length - 2; i >= 0; i--) {
+      ///i choose not to get to 0  in my loop so i dont get to my input layer
+
+      let inputDerWeights = /* wx + wx...... b so ans is x+x+x+.....*/  0
+      if (i == 0) {///means it is in the layer before input layer
+        inputDerWeights = this.input
+      } else inputDerWeights = this.layers[i - 1]////previous layer output is this layers input
+      derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
+      //hidden layer
+      // derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
+      // error =  
+      // console.log(math.size(error));
+      // console.log(math.size(derivativeOfSigmoid));
+
+      ///here i calculate delta
+      // console.log(math.size(this.layers[this.layers.length-1]),' layer '+i,this.layers.length-1);
+
+      // console.log(math.size(currentOutPutError));
+      // console.log(math.size(this.sigmoidPrime(this.layers[i])))
+
+      // error =  math.multiply(currentOutPutError,this.sigmoidPrime(this.layers[i]))
 
 
-    // l1 = nonlin(np.dot(l0, syn0))
-    // l2 = nonlin(np.dot(l1, syn1))
 
-    // l2_error = y - l2
-    // if (j % 10000) == 0:
-    //     print("Error: " + str(np.mean(np.abs(l2_error))))
-
-    // l2_delta = l2_error * nonlin(l2, deriv=True)
-    // l1_error = l2_delta.dot(syn1.T)
-    // l1_delta = l1_error * nonlin(l1, deriv=True)
-
-    // syn1 += l1.T.dot(l2_delta)
-    // syn0 += l0.T.dot(l1_delta)
-
-
+      // let layer_delta = math.dotMultiply(error, this.sigmoidPrime(this.layers[i + 1]))
+      // delta.push(layer_delta)
+      // ///update model weights
+      // this.model[i].weights = math.add(this.model[i].weights, math.multiply(0.1,math.multiply(math.transpose(this.layers[i]), layer_delta)))
+    }
   }
 
   predict(sample) {
@@ -343,25 +360,26 @@ class Savage_model {
     let model = this.model
     let file = fs.createWriteStream(fileName);
     model = JSON.stringify(model)
-    file.on('error', function(err) { /* error handling */ });
+    file.on('error', function (err) { /* error handling */ });
     file.write(model);
     file.end()
   }
 
-  loadModel(modelDirectory){
+  loadModel(modelDirectory) {
     let model = fs.readFileSync(modelDirectory, { encoding: 'utf8' })
     model = JSON.parse(model)
-    this.model  = model
+    this.model = model
     console.log('model loaded into object!')
   }
 
-  feedForWard(inputs) {
+  feedForWard(input) {
     let layers = []
-    layers.push(inputs)
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
-      inputs = layers[layers.length - 1]
-      layers.push(this.sigmoid(math.add(math.multiply(inputs, element.weights), element.bias)))
+      if (i > 0) {
+        input = layers[layers.length - 1]
+      }
+      layers.push(this.sigmoid(math.add(math.multiply(input, element.weights), element.bias)))
     }
 
     //so i try and run every item in a model
@@ -374,15 +392,3 @@ class Savage_model {
 
 module.exports = { Savage, Savage_model }
 
-
-// // work with an expression tree, evaluate results
-// const h = math.parse('x^2 + x')
-// const dh = math.derivative(h, 'x')
-// console.log(dh.toString()) // '2 * x + 1'
-// console.log(dh.eval({ x: 3 })) // '7'
-
-// chained operations
-// math.chain(3)
-//     .add(4)
-//     .multiply(2)
-//     .done() // 14
