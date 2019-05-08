@@ -94,7 +94,7 @@ class Savage {
   K_Nearest_Neighbour(data, points) {
 
   }
-
+ 
 
   normalise(data) {
     console.log('data normalysed');
@@ -282,7 +282,7 @@ class Savage_model {
       this.backPropagation(index, 1, batch)
 
       // }
-      if (index % 10 == 0) {
+      if (index % 100 == 0) {
         console.log("Itterration " + index);
       }
     }
@@ -292,63 +292,39 @@ class Savage_model {
     return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
+  dataClassesDistribution(labels){
+    let data={}
+    labels.forEach(element => {
+      if(!data.hasOwnProperty(element))
+      {
+        data[element]=1
+      }
+      else data[element] = data[element]+1
+    });
+
+    // console.log(data);
+    
+  }
+
   sigmoidPrime(s) {
     return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
   }
 
   backPropagation(Itterration, batchPosition, batchSize) {
+        for (let ii = this.layers.length-1; ii >= 0; ii--) {
+          const layer = this.layers[ii];
+          const model = this.model[ii].weights
+          // console.log(model);
+          
+          console.log(math.size(model));
+          console.log(math.size(layer));
 
-    let input = this.input
-    //  this.sigmoidPrime(math.multiply(input,this.model[0].weights))
-    let error = []
-    let delta = []
-
-    let currentOutPutError = math.subtract(this.layers[this.layers.length - 1], this.labels)
-
-    // handling input layer
-    error = currentOutPutError
-    // console.log(this.labels.length);
-    if (Itterration % 100 == 0) {
-      console.log('error is = ', math.sum(math.abs(error)));
-    }
-    let derivativeOfSigmoid = this.sigmoidPrime(this.layers[this.layers.length - 1])
-
-    let previousLayer = this.layers[this.layers.length - 2]
-    // console.log(math.size(error));
-    // console.log(math.size(previousLayer));
-    let outPutLayerIndex = this.model.length - 1
-    this.model[outPutLayerIndex].weights = math.subtract(this.model[outPutLayerIndex].weights, math.multiply(math.transpose(previousLayer), math.dotMultiply(error, derivativeOfSigmoid)))
-
-    ///since its backwards we start at the end
-    for (let i = this.model.length - 2; i >= 0; i--) {
-      ///i choose not to get to 0  in my loop so i dont get to my input layer
-
-      let inputDerWeights = /* wx + wx...... b so ans is x+x+x+.....*/  0
-      if (i == 0) {///means it is in the layer before input layer
-        inputDerWeights = this.input
-      } else inputDerWeights = this.layers[i - 1]////previous layer output is this layers input
-      derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
-      //hidden layer
-      // derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
-      // error =  
-      // console.log(math.size(error));
-      // console.log(math.size(derivativeOfSigmoid));
-
-      ///here i calculate delta
-      // console.log(math.size(this.layers[this.layers.length-1]),' layer '+i,this.layers.length-1);
-
-      // console.log(math.size(currentOutPutError));
-      // console.log(math.size(this.sigmoidPrime(this.layers[i])))
-
-      // error =  math.multiply(currentOutPutError,this.sigmoidPrime(this.layers[i]))
-
-
-
-      // let layer_delta = math.dotMultiply(error, this.sigmoidPrime(this.layers[i + 1]))
-      // delta.push(layer_delta)
-      // ///update model weights
-      // this.model[i].weights = math.add(this.model[i].weights, math.multiply(0.1,math.multiply(math.transpose(this.layers[i]), layer_delta)))
-    }
+          if (ii == this.layers.length-1) {
+              ///means am out the output layer
+          } 
+          
+          
+        }
   }
 
   predict(sample) {
