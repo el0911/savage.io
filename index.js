@@ -83,7 +83,6 @@ class Savage {
       expression = expression + 'x' + i + ' * w' + i + ' + '  //x being the variabe w being the weight
     }
     expression = expression + 'c'
-    console.log(expression);
 
 
 
@@ -94,7 +93,7 @@ class Savage {
   K_Nearest_Neighbour(data, points) {
 
   }
- 
+
 
   normalise(data) {
     console.log('data normalysed');
@@ -151,14 +150,12 @@ class Savage {
 
               const dh = math.derivative(h, 'c')
               const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-              // console.log(new_.toString());
               expressions_list.push(new_)
 
             }
             else {
               const dh = math.derivative(h, 'w' + i)
               const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-              // console.log(new_.toString());
               expressions_list.push(new_)
             }
           }
@@ -269,15 +266,18 @@ class Savage_model {
   }
 
   run(input, labels, itterations, batch) {
-    this.labels = labels
-    this.input = input
     for (let index = 0; index < itterations; index++) {
-      // console.log( labels.length/batch);
 
       ///here i divide the datset into batches to train 
       let trainedItemCheck = 0 //variable to check  how many items ive passed through to train 
       // for (let i = 0; i <= parseInt(labels.length/batch); i++) {
       ///so i first send the elements batch by batch
+      const rand_index = (Math.floor(Math.random() * (input.length - 1 + 1)) + 1) - 1
+
+      this.input = input[rand_index]
+      this.label = labels[rand_index]
+
+
       this.feedForWard(this.input)
       this.backPropagation(index, 1, batch)
 
@@ -292,18 +292,16 @@ class Savage_model {
     return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
-  dataClassesDistribution(labels){
-    let data={}
+  dataClassesDistribution(labels) {
+    let data = {}
     labels.forEach(element => {
-      if(!data.hasOwnProperty(element))
-      {
-        data[element]=1
+      if (!data.hasOwnProperty(element)) {
+        data[element] = 1
       }
-      else data[element] = data[element]+1
+      else data[element] = data[element] + 1
     });
 
-    // console.log(data);
-    
+
   }
 
   sigmoidPrime(s) {
@@ -311,20 +309,34 @@ class Savage_model {
   }
 
   backPropagation(Itterration, batchPosition, batchSize) {
-        for (let ii = this.layers.length-1; ii >= 0; ii--) {
-          const layer = this.layers[ii];
-          const model = this.model[ii].weights
-          // console.log(model);
-          
-          console.log(math.size(model));
-          console.log(math.size(layer));
+    const learning_rate = 0.2
+    const point = this.input
+    let weights = this.model[0].weights
+    const z = point[0] * weights[0] + point[1] * weights[1] + point[2] * weights[2] + point[3] * weights[3] + this.model[0].bias
+    const prediction = this.sigmoid(z)
 
-          if (ii == this.layers.length-1) {
-              ///means am out the output layer
-          } 
-          
-          
-        }
+    const target = this.label
+    const cost = math.square(math.subtract(prediction, target))
+
+    const derivativeOfCost = math.multiply(2, math.subtract(prediction, target))
+
+    const derivativeOfPrediction = this.sigmoid(z)
+
+
+    const dz_dw1 = point[0]
+    const dz_dw2 = point[1]
+    const dz_dw3 = point[2]
+    const dz_dw4 = point[3]
+    const dz_db = 1
+
+    const dcost_dz = derivativeOfCost * derivativeOfPrediction
+    const dcost_dw = math.multiply(learning_rate , math.multiply(point,dcost_dz))
+
+    const dcost_db = dcost_dz * dz_db
+    
+    weights = math.subtract(weights , math.transpose([dcost_dw]) )
+    this.model[0].bias = this.model[0].bias - (learning_rate * dcost_db)
+    this.model[0].weights = weights
   }
 
   predict(sample) {
@@ -349,18 +361,27 @@ class Savage_model {
   }
 
   feedForWard(input) {
+
     let layers = []
+    let layerToFindDer = []
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
       if (i > 0) {
         input = layers[layers.length - 1]
       }
-      layers.push(this.sigmoid(math.add(math.multiply(input, element.weights), element.bias)))
+
+
+      const output = math.add(math.multiply(input, element.weights), element.bias)
+      layerToFindDer.push(output)
+      layers.push(this.sigmoid(output))
     }
 
     //so i try and run every item in a model
     this.layers = layers
+    this.layerToFindDer = layerToFindDer
     return this.layers ///this is just for the predict function
+
+
   }
 
 
