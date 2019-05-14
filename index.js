@@ -310,38 +310,78 @@ class Savage_model {
 
   backPropagation(Itterration, batchPosition, batchSize) {
     const learning_rate = 0.2
-    const point = this.input
-    let weights = this.model[0].weights
-    const z = point[0] * weights[0] + point[1] * weights[1] + point[2] * weights[2] + point[3] * weights[3] + this.model[0].bias
-    const prediction = this.sigmoid(z)
-
-    const target = this.label
-    const cost = math.square(math.subtract(prediction, target))
-
-    const derivativeOfCost = math.multiply(2, math.subtract(prediction, target))
-
-    const derivativeOfPrediction = this.sigmoid(z)
+    let dcost_dz = 0
+    let deltas = []   
+     for (let index = this.model.length-1; index >= 0; index--) {
+      deltas.push(0)
+     }
 
 
-    const dz_dw1 = point[0]
-    const dz_dw2 = point[1]
-    const dz_dw3 = point[2]
-    const dz_dw4 = point[3]
-    const dz_db = 1
+    for (let index = this.model.length-1; index >= 0; index--) {
+      let weights = this.model[index].weights
+      let bias = this.model[index].bias
+      const target = this.label
+      const dz_db = 1
+      const prediction = this.layers[this.model.length] ///am not subtracting by one in this index cuz the layers is longer than the model by 1 cuz of the input data
+      const error = math.subtract(prediction, target)
 
-    const dcost_dz = derivativeOfCost * derivativeOfPrediction
-    const dcost_dw = math.multiply(learning_rate , math.multiply(point,dcost_dz))
 
-    const dcost_db = dcost_dz * dz_db
-    
-    weights = math.subtract(weights , math.transpose([dcost_dw]) )
-    this.model[0].bias = this.model[0].bias - (learning_rate * dcost_db)
-    this.model[0].weights = weights
+      if (index==this.model.length-1) {///input layer
+        
+        const input = this.layers[index]//input to the layer is the output from previous layer
+
+        const layerToFindDer = this.layerToFindDer[index+1]
+
+        const derivativeOfCost = math.multiply(2,error)
+
+        const derivativeOfPrediction = this.sigmoid(layerToFindDer)
+
+        deltas[index] = math.multiply( derivativeOfCost , derivativeOfPrediction)
+        const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
+
+        const dcost_db = math.multiply(deltas[index] , dz_db)
+
+        weights = math.subtract(weights, math.transpose([dcost_dw]))
+        this.model[index].bias = math.subtract(bias,math.multiply(learning_rate , dcost_db))
+        this.model[index].weights = weights
+      }
+      else{
+        
+        const outputFromThisLayer = [this.layers[index+1]]//input to the layer is the output from previous layer  
+        const error  = math.multiply(deltas[index+1],math.transpose(this.model[index+1].weights))
+
+        const input = math.transpose([this.layers[index]])//input to the layer is the output from previous layer     
+           
+
+        deltas[index] = math.dotMultiply(error,this.sigmoidPrime(outputFromThisLayer))
+
+
+        const adjustmentValue = math.multiply(learning_rate,math.multiply(input,deltas[index]))
+        weights = math.subtract(weights, adjustmentValue)
+        this.model[index].weights = weights
+        
+        // const biasadjustmentValue = math.multiply(learning_rate,math.multiply(1,deltas[index]))
+        // bias = math.subtract(bias, adjustmentValue)
+        // this.model[index].bias = weights
+
+        // // [1,4] -->input [3,4] -->error
+        
+       
+       
+      }
+
+    }
+
+
   }
 
   predict(sample) {
     let ans = this.feedForWard(sample)
     return ans[ans.length - 1];
+  }
+
+  print_size(x,y){
+    console.log(math.size(x),y)
   }
 
   modelSave(fileName) {
@@ -364,6 +404,10 @@ class Savage_model {
 
     let layers = []
     let layerToFindDer = []
+
+    layers.push(input)//input is the first  layer this caused  a lot of problems
+    layerToFindDer.push(input)
+
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
       if (i > 0) {
