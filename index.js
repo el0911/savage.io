@@ -259,20 +259,22 @@ class Savage_model {
       'input': input,
       'activation': activation,
       'output': output,
+      'iterations': 100000, 
       'weights': math.random([input, output]),////creatte a random matrix
-      'bias': 0,////same
+      'bias': math.random([ output]),////same
       'index': this.model.length - 1
     })
   }
 
   run(input, labels, itterations, batch) {
+    let inputBuffer = input
     for (let index = 0; index < itterations; index++) {
 
       ///here i divide the datset into batches to train 
       let trainedItemCheck = 0 //variable to check  how many items ive passed through to train 
       // for (let i = 0; i <= parseInt(labels.length/batch); i++) {
       ///so i first send the elements batch by batch
-      const rand_index = (Math.floor(Math.random() * (input.length - 1 + 1)) + 1) - 1
+      const rand_index = (Math.floor(Math.random() * (inputBuffer.length - 1 + 1)) + 1) - 1
 
       this.input = input[rand_index]
       this.label = labels[rand_index]
@@ -280,11 +282,18 @@ class Savage_model {
 
       this.feedForWard(this.input)
       this.backPropagation(index, 1, batch)
-
+      
       // }
-      if (index % 100 == 0) {
+      if (index % 10000 == 0) {
         console.log("Itterration " + index);
       }
+      // console.log(inputBuffer.length);
+      // console.log(input.length);
+      
+      // inputBuffer.splice(rand_index,1)
+      // if (inputBuffer.length == 2) {
+      //   inputBuffer = input
+      // }
     }
   }
 
@@ -334,7 +343,7 @@ class Savage_model {
 
         const derivativeOfCost = math.multiply(2,error)
 
-        const derivativeOfPrediction = this.sigmoid(layerToFindDer)
+        const derivativeOfPrediction = this.sigmoidPrime(prediction)
 
         deltas[index] = math.multiply( derivativeOfCost , derivativeOfPrediction)
         const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
@@ -346,6 +355,7 @@ class Savage_model {
         this.model[index].weights = weights
       }
       else{
+        // console.log(deltas);
         
         const outputFromThisLayer = [this.layers[index+1]]//input to the layer is the output from previous layer  
         const error  = math.multiply(deltas[index+1],math.transpose(this.model[index+1].weights))
@@ -359,10 +369,10 @@ class Savage_model {
         const adjustmentValue = math.multiply(learning_rate,math.multiply(input,deltas[index]))
         weights = math.subtract(weights, adjustmentValue)
         this.model[index].weights = weights
-        
-        // const biasadjustmentValue = math.multiply(learning_rate,math.multiply(1,deltas[index]))
-        // bias = math.subtract(bias, adjustmentValue)
-        // this.model[index].bias = weights
+
+        const biasadjustmentValue = math.multiply(learning_rate,math.multiply(1,deltas[index]))
+        bias = math.subtract(bias, biasadjustmentValue[0])
+        this.model[index].bias = bias
 
         // // [1,4] -->input [3,4] -->error
         
@@ -410,10 +420,10 @@ class Savage_model {
 
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
+      
       if (i > 0) {
         input = layers[layers.length - 1]
       }
-
 
       const output = math.add(math.multiply(input, element.weights), element.bias)
       layerToFindDer.push(output)
