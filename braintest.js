@@ -57,7 +57,7 @@ const data  = [[5.4,  3.4,  1.7,  0.2,  0.],
 const brain =  require('brain.js')
 
 const config = {
-    hiddenLayers: [2,2,2],     // array of ints for the sizes of the hidden layers in the network
+    hiddenLayers: [3,4,5,4,2],     // array of ints for the sizes of the hidden layers in the network
     activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
     learningRate: 0.2,
 };
