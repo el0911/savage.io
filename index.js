@@ -8,13 +8,12 @@ const csv = require('csvtojson')
 
 class Savage {
 
-  model() {
-    console.log('model initialised!!');
-  }
+
 
   constructor() {
     console.log('savage library initailized!!');
     this.data = ''
+
   }
 
   loadDataFromCSV(link, removeFirstRow) {
@@ -32,6 +31,36 @@ class Savage {
 
 
   }
+
+  modelSave(fileName) {
+    let fullmodel = {
+          model: this.model,
+          values: this.model_values
+    }
+    let file = fs.createWriteStream(fileName);
+    model = JSON.stringify(fullmodel)
+    file.on('error', function (err) { /* error handling */ });
+    file.write(model);
+    file.end()
+  }
+
+  loadModel(fileName) {
+    let fullmodel = fs.readFileSync(fileName, { encoding: 'utf8' })
+    fullmodel = JSON.parse(fullmodel)
+    this.model = fullmodel['model']
+    this.model_values = fullmodel['model_values']
+    console.log('model loaded into object!')
+  }
+
+  predict(sample) {
+    const length = this.model_values.length
+    const weights = this.model_values.slice(0, length)
+    const bias = this.model_values[length]
+    
+    let ans = math.add(math.multiply(sample,weights),bias)
+    return ans;
+  }
+
 
   // loadDataFromURL(link,removeFirstRow){
   //   csv()
@@ -83,11 +112,10 @@ class Savage {
       expression = expression + 'x' + i + ' * w' + i + ' + '  //x being the variabe w being the weight
     }
     expression = expression + 'c'
-    console.log(expression);
+    this.model = expression
+    this.model_values = this.optimizers('gradient_descent', data, dimensions, expression, lr, itterations)
 
-
-
-    return this.optimizers('gradient_descent', data, dimensions, expression, lr, itterations)
+    return this.model_values
   }
 
 
@@ -151,14 +179,12 @@ class Savage {
 
               const dh = math.derivative(h, 'c')
               const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-              // console.log(new_.toString());
               expressions_list.push(new_)
 
             }
             else {
               const dh = math.derivative(h, 'w' + i)
               const new_ = math.parse('(2 / n) * ( ' + dh.toString() + ' * ( y - ( ' + expression + ' )  ) )')
-              // console.log(new_.toString());
               expressions_list.push(new_)
             }
           }
@@ -262,29 +288,41 @@ class Savage_model {
       'input': input,
       'activation': activation,
       'output': output,
+      'iterations': 100000,
       'weights': math.random([input, output]),////creatte a random matrix
-      'bias': 0,////same
+      'bias': math.random([output]),////same
       'index': this.model.length - 1
     })
   }
 
   run(input, labels, itterations, batch) {
-    this.labels = labels
-    this.input = input
+    let inputBuffer = input
     for (let index = 0; index < itterations; index++) {
-      // console.log( labels.length/batch);
 
       ///here i divide the datset into batches to train 
       let trainedItemCheck = 0 //variable to check  how many items ive passed through to train 
       // for (let i = 0; i <= parseInt(labels.length/batch); i++) {
       ///so i first send the elements batch by batch
+      const rand_index = (Math.floor(Math.random() * (inputBuffer.length - 1 + 1)) + 1) - 1
+
+      this.input = input[rand_index]
+      this.label = labels[rand_index]
+
+
       this.feedForWard(this.input)
       this.backPropagation(index, 1, batch)
 
       // }
-      if (index % 10 == 0) {
+      if (index % 10000 == 0) {
         console.log("Itterration " + index);
       }
+      // console.log(inputBuffer.length);
+      // console.log(input.length);
+
+      // inputBuffer.splice(rand_index,1)
+      // if (inputBuffer.length == 2) {
+      //   inputBuffer = input
+      // }
     }
   }
 
@@ -292,68 +330,97 @@ class Savage_model {
     return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
+  dataClassesDistribution(labels) {
+    let data = {}
+    labels.forEach(element => {
+      if (!data.hasOwnProperty(element)) {
+        data[element] = 1
+      }
+      else data[element] = data[element] + 1
+    });
+
+
+  }
+
   sigmoidPrime(s) {
     return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
   }
 
   backPropagation(Itterration, batchPosition, batchSize) {
-
-    let input = this.input
-    //  this.sigmoidPrime(math.multiply(input,this.model[0].weights))
-    let error = []
-    let delta = []
-
-    let currentOutPutError = math.subtract(this.layers[this.layers.length - 1], this.labels)
-
-    // handling input layer
-    error = currentOutPutError
-    // console.log(this.labels.length);
-    if (Itterration % 100 == 0) {
-      console.log('error is = ', math.sum(math.abs(error)));
+    const learning_rate = 0.2
+    let dcost_dz = 0
+    let deltas = []
+    for (let index = this.model.length - 1; index >= 0; index--) {
+      deltas.push(0)
     }
-    let derivativeOfSigmoid = this.sigmoidPrime(this.layers[this.layers.length - 1])
-
-    let previousLayer = this.layers[this.layers.length - 2]
-    // console.log(math.size(error));
-    // console.log(math.size(previousLayer));
-    let outPutLayerIndex = this.model.length - 1
-    this.model[outPutLayerIndex].weights = math.subtract(this.model[outPutLayerIndex].weights, math.multiply(math.transpose(previousLayer), math.dotMultiply(error, derivativeOfSigmoid)))
-
-    ///since its backwards we start at the end
-    for (let i = this.model.length - 2; i >= 0; i--) {
-      ///i choose not to get to 0  in my loop so i dont get to my input layer
-
-      let inputDerWeights = /* wx + wx...... b so ans is x+x+x+.....*/  0
-      if (i == 0) {///means it is in the layer before input layer
-        inputDerWeights = this.input
-      } else inputDerWeights = this.layers[i - 1]////previous layer output is this layers input
-      derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
-      //hidden layer
-      // derivativeOfSigmoid = this.sigmoidPrime(this.layers[i])
-      // error =  
-      // console.log(math.size(error));
-      // console.log(math.size(derivativeOfSigmoid));
-
-      ///here i calculate delta
-      // console.log(math.size(this.layers[this.layers.length-1]),' layer '+i,this.layers.length-1);
-
-      // console.log(math.size(currentOutPutError));
-      // console.log(math.size(this.sigmoidPrime(this.layers[i])))
-
-      // error =  math.multiply(currentOutPutError,this.sigmoidPrime(this.layers[i]))
 
 
+    for (let index = this.model.length - 1; index >= 0; index--) {
+      let weights = this.model[index].weights
+      let bias = this.model[index].bias
+      const target = this.label
+      const dz_db = 1
+      const prediction = this.layers[this.model.length] ///am not subtracting by one in this index cuz the layers is longer than the model by 1 cuz of the input data
+      const error = math.subtract(prediction, target)
 
-      // let layer_delta = math.dotMultiply(error, this.sigmoidPrime(this.layers[i + 1]))
-      // delta.push(layer_delta)
-      // ///update model weights
-      // this.model[i].weights = math.add(this.model[i].weights, math.multiply(0.1,math.multiply(math.transpose(this.layers[i]), layer_delta)))
+
+      if (index == this.model.length - 1) {///input layer
+
+        const input = this.layers[index]//input to the layer is the output from previous layer
+
+        const layerToFindDer = this.layerToFindDer[index + 1]
+
+        const derivativeOfCost = math.multiply(2, error)
+
+        const derivativeOfPrediction = this.sigmoidPrime(prediction)
+
+        deltas[index] = math.multiply(derivativeOfCost, derivativeOfPrediction)
+        const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
+
+        const dcost_db = math.multiply(deltas[index], dz_db)
+
+        weights = math.subtract(weights, math.transpose([dcost_dw]))
+        this.model[index].bias = math.subtract(bias, math.multiply(learning_rate, dcost_db))
+        this.model[index].weights = weights
+      }
+      else {
+        // console.log(deltas);
+
+        const outputFromThisLayer = [this.layers[index + 1]]//input to the layer is the output from previous layer  
+        const error = math.multiply(deltas[index + 1], math.transpose(this.model[index + 1].weights))
+
+        const input = math.transpose([this.layers[index]])//input to the layer is the output from previous layer     
+
+
+        deltas[index] = math.dotMultiply(error, this.sigmoidPrime(outputFromThisLayer))
+
+
+        const adjustmentValue = math.multiply(learning_rate, math.multiply(input, deltas[index]))
+        weights = math.subtract(weights, adjustmentValue)
+        this.model[index].weights = weights
+
+        const biasadjustmentValue = math.multiply(learning_rate, math.multiply(1, deltas[index]))
+        bias = math.subtract(bias, biasadjustmentValue[0])
+        this.model[index].bias = bias
+
+        // // [1,4] -->input [3,4] -->error
+
+
+
+      }
+
     }
+
+
   }
 
   predict(sample) {
     let ans = this.feedForWard(sample)
     return ans[ans.length - 1];
+  }
+
+  print_size(x, y) {
+    console.log(math.size(x), y)
   }
 
   modelSave(fileName) {
@@ -373,18 +440,31 @@ class Savage_model {
   }
 
   feedForWard(input) {
+
     let layers = []
+    let layerToFindDer = []
+
+    layers.push(input)//input is the first  layer this caused  a lot of problems
+    layerToFindDer.push(input)
+
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
+
       if (i > 0) {
         input = layers[layers.length - 1]
       }
-      layers.push(this.sigmoid(math.add(math.multiply(input, element.weights), element.bias)))
+
+      const output = math.add(math.multiply(input, element.weights), element.bias)
+      layerToFindDer.push(output)
+      layers.push(this.sigmoid(output))
     }
 
     //so i try and run every item in a model
     this.layers = layers
+    this.layerToFindDer = layerToFindDer
     return this.layers ///this is just for the predict function
+
+
   }
 
 

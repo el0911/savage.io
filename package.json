@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "brain.js": "^1.6.1",
     "csvtojson": "^2.0.8",
     "mathjs": "^5.8.0"
   }
