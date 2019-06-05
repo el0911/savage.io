@@ -1,5 +1,5 @@
 {
-  "name": "@king__somto/savage",
+  "name": "@king__somto/sgavage",
   "version": "1.0.5",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@king__somto/savage": "^1.0.5",
     "brain.js": "^1.6.1",
     "csvtojson": "^2.0.8",
     "mathjs": "^5.8.0"

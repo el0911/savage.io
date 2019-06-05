@@ -8,13 +8,12 @@ const csv = require('csvtojson')
 
 class Savage {
 
-  model() {
-    console.log('model initialised!!');
-  }
+
 
   constructor() {
     console.log('savage library initailized!!');
     this.data = ''
+
   }
 
   loadDataFromCSV(link, removeFirstRow) {
@@ -32,6 +31,36 @@ class Savage {
 
 
   }
+
+  modelSave(fileName) {
+    let fullmodel = {
+          model: this.model,
+          values: this.model_values
+    }
+    let file = fs.createWriteStream(fileName);
+    model = JSON.stringify(fullmodel)
+    file.on('error', function (err) { /* error handling */ });
+    file.write(model);
+    file.end()
+  }
+
+  loadModel(fileName) {
+    let fullmodel = fs.readFileSync(fileName, { encoding: 'utf8' })
+    fullmodel = JSON.parse(fullmodel)
+    this.model = fullmodel['model']
+    this.model_values = fullmodel['model_values']
+    console.log('model loaded into object!')
+  }
+
+  predict(sample) {
+    const length = this.model_values.length
+    const weights = this.model_values.slice(0, length)
+    const bias = this.model_values[length]
+    
+    let ans = math.add(math.multiply(sample,weights),bias)
+    return ans;
+  }
+
 
   // loadDataFromURL(link,removeFirstRow){
   //   csv()
@@ -83,10 +112,10 @@ class Savage {
       expression = expression + 'x' + i + ' * w' + i + ' + '  //x being the variabe w being the weight
     }
     expression = expression + 'c'
+    this.model = expression
+    this.model_values = this.optimizers('gradient_descent', data, dimensions, expression, lr, itterations)
 
-
-
-    return this.optimizers('gradient_descent', data, dimensions, expression, lr, itterations)
+    return this.model_values
   }
 
 
@@ -259,9 +288,9 @@ class Savage_model {
       'input': input,
       'activation': activation,
       'output': output,
-      'iterations': 100000, 
+      'iterations': 100000,
       'weights': math.random([input, output]),////creatte a random matrix
-      'bias': math.random([ output]),////same
+      'bias': math.random([output]),////same
       'index': this.model.length - 1
     })
   }
@@ -282,14 +311,14 @@ class Savage_model {
 
       this.feedForWard(this.input)
       this.backPropagation(index, 1, batch)
-      
+
       // }
       if (index % 10000 == 0) {
         console.log("Itterration " + index);
       }
       // console.log(inputBuffer.length);
       // console.log(input.length);
-      
+
       // inputBuffer.splice(rand_index,1)
       // if (inputBuffer.length == 2) {
       //   inputBuffer = input
@@ -320,13 +349,13 @@ class Savage_model {
   backPropagation(Itterration, batchPosition, batchSize) {
     const learning_rate = 0.2
     let dcost_dz = 0
-    let deltas = []   
-     for (let index = this.model.length-1; index >= 0; index--) {
+    let deltas = []
+    for (let index = this.model.length - 1; index >= 0; index--) {
       deltas.push(0)
-     }
+    }
 
 
-    for (let index = this.model.length-1; index >= 0; index--) {
+    for (let index = this.model.length - 1; index >= 0; index--) {
       let weights = this.model[index].weights
       let bias = this.model[index].bias
       const target = this.label
@@ -335,49 +364,49 @@ class Savage_model {
       const error = math.subtract(prediction, target)
 
 
-      if (index==this.model.length-1) {///input layer
-        
+      if (index == this.model.length - 1) {///input layer
+
         const input = this.layers[index]//input to the layer is the output from previous layer
 
-        const layerToFindDer = this.layerToFindDer[index+1]
+        const layerToFindDer = this.layerToFindDer[index + 1]
 
-        const derivativeOfCost = math.multiply(2,error)
+        const derivativeOfCost = math.multiply(2, error)
 
         const derivativeOfPrediction = this.sigmoidPrime(prediction)
 
-        deltas[index] = math.multiply( derivativeOfCost , derivativeOfPrediction)
+        deltas[index] = math.multiply(derivativeOfCost, derivativeOfPrediction)
         const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
 
-        const dcost_db = math.multiply(deltas[index] , dz_db)
+        const dcost_db = math.multiply(deltas[index], dz_db)
 
         weights = math.subtract(weights, math.transpose([dcost_dw]))
-        this.model[index].bias = math.subtract(bias,math.multiply(learning_rate , dcost_db))
+        this.model[index].bias = math.subtract(bias, math.multiply(learning_rate, dcost_db))
         this.model[index].weights = weights
       }
-      else{
+      else {
         // console.log(deltas);
-        
-        const outputFromThisLayer = [this.layers[index+1]]//input to the layer is the output from previous layer  
-        const error  = math.multiply(deltas[index+1],math.transpose(this.model[index+1].weights))
+
+        const outputFromThisLayer = [this.layers[index + 1]]//input to the layer is the output from previous layer  
+        const error = math.multiply(deltas[index + 1], math.transpose(this.model[index + 1].weights))
 
         const input = math.transpose([this.layers[index]])//input to the layer is the output from previous layer     
-           
-
-        deltas[index] = math.dotMultiply(error,this.sigmoidPrime(outputFromThisLayer))
 
 
-        const adjustmentValue = math.multiply(learning_rate,math.multiply(input,deltas[index]))
+        deltas[index] = math.dotMultiply(error, this.sigmoidPrime(outputFromThisLayer))
+
+
+        const adjustmentValue = math.multiply(learning_rate, math.multiply(input, deltas[index]))
         weights = math.subtract(weights, adjustmentValue)
         this.model[index].weights = weights
 
-        const biasadjustmentValue = math.multiply(learning_rate,math.multiply(1,deltas[index]))
+        const biasadjustmentValue = math.multiply(learning_rate, math.multiply(1, deltas[index]))
         bias = math.subtract(bias, biasadjustmentValue[0])
         this.model[index].bias = bias
 
         // // [1,4] -->input [3,4] -->error
-        
-       
-       
+
+
+
       }
 
     }
@@ -390,8 +419,8 @@ class Savage_model {
     return ans[ans.length - 1];
   }
 
-  print_size(x,y){
-    console.log(math.size(x),y)
+  print_size(x, y) {
+    console.log(math.size(x), y)
   }
 
   modelSave(fileName) {
@@ -420,7 +449,7 @@ class Savage_model {
 
     for (let i = 0; i < this.model.length; i++) {
       const element = this.model[i];
-      
+
       if (i > 0) {
         input = layers[layers.length - 1]
       }
