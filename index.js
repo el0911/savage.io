@@ -257,7 +257,7 @@ class Savage_model {
     console.log('savage model initialized');
     this.model = []
     this.bias = []
-    this.activations = ['sigmoid', 'softmax']
+    this.activations = ['sigmoid', 'relu']
   }
 
   addDense(config) {
@@ -269,7 +269,7 @@ class Savage_model {
     }
 
     if (!this.activations.includes(activation)) {
-      throw Error('Unrecognised activation function')
+      throw Error('Unrecognised activation function :available activation functions are','sigmoid', 'relu' )
     }
 
     if (!input) {
@@ -295,7 +295,7 @@ class Savage_model {
     })
   }
 
-  run(input, labels, itterations, batch) {
+  run(input, labels, itterations, learning_rate) {
     let inputBuffer = input
     for (let index = 0; index < itterations; index++) {
 
@@ -310,7 +310,7 @@ class Savage_model {
 
 
       this.feedForWard(this.input)
-      this.backPropagation(index, 1, batch)
+      this.backPropagation(index, 1, learning_rate)
 
       // }
       if (index % 10000 == 0) {
@@ -330,6 +330,21 @@ class Savage_model {
     return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
+
+  reLU(x){
+    // num = (num + Math.abs(num)) / 2;
+    return math.divide(math.add(x,math.abs(x)),2)
+  }
+
+  reLUPrime(x){
+    return math.dotDivide(math.dotDivide(math.add(x,math.abs(x)),math.abs(x)),2)
+  }
+
+
+  sigmoidPrime(s) {
+    return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
+  }
+
   dataClassesDistribution(labels) {
     let data = {}
     labels.forEach(element => {
@@ -342,12 +357,8 @@ class Savage_model {
 
   }
 
-  sigmoidPrime(s) {
-    return math.dotMultiply(s, math.subtract(1, s))  //s * (1 - s)
-  }
 
-  backPropagation(Itterration, batchPosition, batchSize) {
-    const learning_rate = 0.2
+  backPropagation(Itterration, batchPosition, learning_rate) {
     let dcost_dz = 0
     let deltas = []
     for (let index = this.model.length - 1; index >= 0; index--) {
@@ -372,7 +383,7 @@ class Savage_model {
 
         const derivativeOfCost = math.multiply(2, error)
 
-        const derivativeOfPrediction = this.sigmoidPrime(prediction)
+        const derivativeOfPrediction = this.findPrimeActivation(prediction,this.model[this.model.length-1].activation)
 
         deltas[index] = math.multiply(derivativeOfCost, derivativeOfPrediction)
         const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
@@ -392,7 +403,7 @@ class Savage_model {
         const input = math.transpose([this.layers[index]])//input to the layer is the output from previous layer     
 
 
-        deltas[index] = math.dotMultiply(error, this.sigmoidPrime(outputFromThisLayer))
+        deltas[index] = math.dotMultiply(error, this.findPrimeActivation(outputFromThisLayer,this.model[index].activation))
 
 
         const adjustmentValue = math.multiply(learning_rate, math.multiply(input, deltas[index]))
@@ -456,7 +467,8 @@ class Savage_model {
 
       const output = math.add(math.multiply(input, element.weights), element.bias)
       layerToFindDer.push(output)
-      layers.push(this.sigmoid(output))
+      const activated = this.findActivation(output,element.activation)
+      layers.push(activated)
     }
 
     //so i try and run every item in a model
@@ -464,6 +476,41 @@ class Savage_model {
     this.layerToFindDer = layerToFindDer
     return this.layers ///this is just for the predict function
 
+
+  }
+
+  findActivation(inputs,activation){
+    const this_ =this
+    const activations = {
+      'relu':function(i){        
+        return this_.reLU(i)
+      },
+      'sigmoid':function(i){
+        return this_.sigmoid(i)
+      }
+    }
+
+    const activationFunction = activations[activation]
+    return  activationFunction(inputs)
+
+  }
+
+  findPrimeActivation(inputs,activation){
+    
+    const this_ =this
+    const primes = {
+      'relu':function(i){        
+        return this_.reLUPrime(i)
+      },
+      'sigmoid':function(i){
+        return this_.sigmoidPrime(i)
+      }
+    }
+
+    const activationFunction = primes[activation]
+    // console.log(activationFunction);
+    
+    return  activationFunction(inputs)
 
   }
 
