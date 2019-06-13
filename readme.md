@@ -8,7 +8,7 @@ npm install @king__somto/savage
 Building an ANN with the library
 
 ``` Javascript
-const {Savage,Savage_model} =  require('./index.js')
+const {Savage,Savage_model} =  require('@king__somto/savage')
 const mod = new Savage_model()
 let savage_ = new Savage()
 const math = require('mathjs')
