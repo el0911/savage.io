@@ -2,10 +2,15 @@
 const math = require('mathjs')
 const fs = require('fs');
 const csv = require('csvtojson')
+const {
+  PromiseStatuses,
+  PROMISE_RESOLVED,
+  promiseStatus,
+  promiseState,
+  isPromiseResolved,
+  isPromiseNotRejected 
+} = require('promise-status-async');
 // const request=require('request')
-
-
-
 class Savage {
 
 
@@ -443,11 +448,16 @@ class Savage_model {
     file.end()
   }
 
-  loadModel(modelDirectory) {
-    let model = fs.readFileSync(modelDirectory, { encoding: 'utf8' })
-    model = JSON.parse(model)
-    this.model = model
+  async loadModel(modelDirectory) {
+   
+    let fullmodel = await fs.readFileSync(modelDirectory, { encoding: 'utf8' })
+    fullmodel = JSON.parse(fullmodel)
+    this.model = fullmodel
+    console.log(this.model);
+    
     console.log('model loaded into object!')
+    
+
   }
 
   feedForWard(input) {

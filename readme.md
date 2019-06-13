@@ -1,4 +1,4 @@
-Building a machine learning tool for node.js servers mainly because python has too many good libraries, feel free to help me out.
+Building a machine learning tool for node.js, mainly because python has too many good libraries, feel free to help me out.
 
 
 ```
@@ -8,24 +8,11 @@ npm install @king__somto/savage
 Building an ANN with the library
 
 ``` Javascript
-const {Savage,Savage_model} =  require('./index.js')
+const {Savage,Savage_model} =  require('@king__somto/savage')
 const mod = new Savage_model()
 let savage_ = new Savage()
 const math = require('mathjs')
 
-// savage_.loadDataFromCSV('diabetes.csv',true)
-// savage_.head()
- 
-
-//    let x= [[0, 0, 0, 1],//1
-//         [0, 0, 1, 0],//2
-//         [0, 0, 1, 1],//3
-//         [0, 1, 0, 0],//4
-//         [0, 1, 0, 1],//5
-//         [0, 1, 1, 0],//6
-//         [0, 1, 1, 1],//7
-//         [1, 0, 0, 0]]//8
-//     let y = [[0], [1], [0], [1], [0], [1], [0], [1]]/////data set created to differentiate even and odd numbers 0 for odd 1 for even
 
 let data  = [[5.4,  3.4,  1.7,  0.2,  0.],
 [5.1,  3.7,  1.5,  0.4,  0.],
@@ -150,14 +137,41 @@ Now creating a model thats awesome now lets save it so we dont have to retrain a
 
 ``` javascript
 ///after training call
-mod.saveModel('fileName.txt')
+mod.saveModel('model.txt')
 ```
+
 
 Now to load model 
 
+Note do not run the model load and the model save at the same time this would lead to errors
+
 ``` javascript
 const model = new Savage_model()
-model.loadModel('fileNames.txt')
+model.loadModel('model.txt')
 let ans = model.predict(x)
 console.log(ans);
 ```
+
+
+Things to do on this project
+
+* Implement function to load csv and txt files
+* Implement function to download dataset into memory 
+* Add RNN,CNN
+* Add leky relu
+
+Tutorial Projects
+
+* Build a even odd number classifier 
+* Solve a regression problem 
+* Build number image classifier 
+* Work on war thanks(finally!!!)-< this project is gonna b special >
+* work on time series project
+* Work on a cat and dogs classifier
+
+ Products to build
+* Face.ai
+* Self driving bike
+* Auto aimer 
+
+
