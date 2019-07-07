@@ -1,15 +1,6 @@
-
 const math = require('mathjs')
 const fs = require('fs');
-const csv = require('csvtojson')
-const {
-  PromiseStatuses,
-  PROMISE_RESOLVED,
-  promiseStatus,
-  promiseState,
-  isPromiseResolved,
-  isPromiseNotRejected 
-} = require('promise-status-async');
+
 // const request=require('request')
 class Savage {
 
@@ -528,4 +519,3 @@ class Savage_model {
 }
 
 module.exports = { Savage, Savage_model }
-

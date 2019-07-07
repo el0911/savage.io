@@ -8,7 +8,8 @@ npm install @king__somto/savage
 Building an ANN with the library
 
 ``` Javascript
-const {Savage,Savage_model} =  require('@king__somto/savage')
+
+const {Savage,Savage_model} =  require('./index')
 const mod = new Savage_model()
 let savage_ = new Savage()
 const math = require('mathjs')
@@ -94,20 +95,20 @@ mod.addDense({
 
 mod.addDense({
     'output':4,
-    'activation':'softmax'
+    'activation':'sigmoid'
 })
 
 mod.addDense({
     'output':1,
-    'activation':'softmax'
+    'activation':'sigmoid'
 })
 
 
-let itterations = 20000
-let batch = 20
+let itterations = 60000
+let learningRate = 0.1
 
 
-mod.run(x,y,itterations,batch)
+mod.run(x,y,itterations,learningRate)
 mod.modelSave('model.txt')
 
 const min = 0
@@ -128,6 +129,7 @@ console.log('actual:',y[rand])
 rand = parseInt(math.random(min,max))
 console.log('predicted:',mod.predict(x[rand]));
 console.log('actual:',y[rand])
+
 
 
 
