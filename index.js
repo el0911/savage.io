@@ -1,5 +1,8 @@
+const norm = require("norm.js");
+
 const math = require('mathjs')
 const fs = require('fs');
+const csv = require('csvtojson')
 
 // const request=require('request')
 class Savage {
@@ -30,8 +33,8 @@ class Savage {
 
   modelSave(fileName) {
     let fullmodel = {
-          model: this.model,
-          values: this.model_values
+      model: this.model,
+      values: this.model_values
     }
     let file = fs.createWriteStream(fileName);
     model = JSON.stringify(fullmodel)
@@ -52,8 +55,8 @@ class Savage {
     const length = this.model_values.length
     const weights = this.model_values.slice(0, length)
     const bias = this.model_values[length]
-    
-    let ans = math.add(math.multiply(sample,weights),bias)
+
+    let ans = math.add(math.multiply(sample, weights), bias)
     return ans;
   }
 
@@ -121,10 +124,13 @@ class Savage {
 
 
   normalise(data) {
-    console.log('data normalysed');
-
-    return math.divide(math.subtract(data, math.min(data)), math.subtract(math.max(data), math.min(data)))
+    return math.dotDivide(math.subtract(data, math.min(data)), math.subtract(math.max(data), math.min(data)))
   }
+
+  standardize(data) {
+    return math.divide(math.subtract(data, math.mean(data)), math.std(data))
+  }
+
 
   optimizers(optimizer, data, dimensions, expression, lr, itterations) {
     const this_ = this
@@ -253,7 +259,7 @@ class Savage_model {
     console.log('savage model initialized');
     this.model = []
     this.bias = []
-    this.activations = ['sigmoid', 'relu']
+    this.activations = ['sigmoid', 'relu', 'linear']
   }
 
   addDense(config) {
@@ -265,7 +271,7 @@ class Savage_model {
     }
 
     if (!this.activations.includes(activation)) {
-      throw Error('Unrecognised activation function :available activation functions are','sigmoid', 'relu' )
+      throw Error('Unrecognised activation function :available activation functions are', 'sigmoid', 'relu')
     }
 
     if (!input) {
@@ -326,14 +332,22 @@ class Savage_model {
     return math.dotDivide(1, math.add(1, math.exp(math.dotMultiply(-1, x))))
   }
 
-
-  reLU(x){
-    // num = (num + Math.abs(num)) / 2;
-    return math.divide(math.add(x,math.abs(x)),2)
+  linear(x) {
+    return x
   }
 
-  reLUPrime(x){
-    return math.dotDivide(math.dotDivide(math.add(x,math.abs(x)),math.abs(x)),2)
+  linearPrime(x) {
+    return x
+  }
+
+
+  reLU(x) {
+    // num = (num + Math.abs(num)) / 2;
+    return math.divide(math.add(x, math.abs(x)), 2)
+  }
+
+  reLUPrime(x) {
+    return math.dotDivide(math.dotDivide(math.add(x, math.abs(x)), math.abs(x)), 2)
   }
 
 
@@ -350,6 +364,23 @@ class Savage_model {
       else data[element] = data[element] + 1
     });
 
+
+  }
+
+  loadDataFromCSV(link, removeFirstRow) {
+
+    this.data = fs.readFileSync(link, { encoding: 'utf8' }).split('\n');
+    if (removeFirstRow) {
+      this.data.shift()
+    }
+
+    for (let i = 0; i < this.data.length; i++) {
+
+      this.data[i] = this.data[i].split(',')
+
+    }
+
+    return this.data
 
   }
 
@@ -379,7 +410,7 @@ class Savage_model {
 
         const derivativeOfCost = math.multiply(2, error)
 
-        const derivativeOfPrediction = this.findPrimeActivation(prediction,this.model[this.model.length-1].activation)
+        const derivativeOfPrediction = this.findPrimeActivation(prediction, this.model[this.model.length - 1].activation)
 
         deltas[index] = math.multiply(derivativeOfCost, derivativeOfPrediction)
         const dcost_dw = math.multiply(learning_rate, math.multiply(input, deltas[index]))
@@ -399,7 +430,7 @@ class Savage_model {
         const input = math.transpose([this.layers[index]])//input to the layer is the output from previous layer     
 
 
-        deltas[index] = math.dotMultiply(error, this.findPrimeActivation(outputFromThisLayer,this.model[index].activation))
+        deltas[index] = math.dotMultiply(error, this.findPrimeActivation(outputFromThisLayer, this.model[index].activation))
 
 
         const adjustmentValue = math.multiply(learning_rate, math.multiply(input, deltas[index]))
@@ -440,14 +471,14 @@ class Savage_model {
   }
 
   async loadModel(modelDirectory) {
-   
+
     let fullmodel = await fs.readFileSync(modelDirectory, { encoding: 'utf8' })
     fullmodel = JSON.parse(fullmodel)
     this.model = fullmodel
     console.log(this.model);
-    
+
     console.log('model loaded into object!')
-    
+
 
   }
 
@@ -468,7 +499,7 @@ class Savage_model {
 
       const output = math.add(math.multiply(input, element.weights), element.bias)
       layerToFindDer.push(output)
-      const activated = this.findActivation(output,element.activation)
+      const activated = this.findActivation(output, element.activation)
       layers.push(activated)
     }
 
@@ -480,38 +511,43 @@ class Savage_model {
 
   }
 
-  findActivation(inputs,activation){
-    const this_ =this
+  findActivation(inputs, activation) {
+    const this_ = this
     const activations = {
-      'relu':function(i){        
+      'relu': function (i) {
         return this_.reLU(i)
       },
-      'sigmoid':function(i){
+      'sigmoid': function (i) {
         return this_.sigmoid(i)
+      }, 'linear': function (i) {
+        return this_.linear(i)
       }
     }
 
     const activationFunction = activations[activation]
-    return  activationFunction(inputs)
+    return activationFunction(inputs)
 
   }
 
-  findPrimeActivation(inputs,activation){
-    
-    const this_ =this
+  findPrimeActivation(inputs, activation) {
+
+    const this_ = this
     const primes = {
-      'relu':function(i){        
+      'relu': function (i) {
         return this_.reLUPrime(i)
       },
-      'sigmoid':function(i){
+      'sigmoid': function (i) {
         return this_.sigmoidPrime(i)
+      },
+      'linear': function (i) {
+        return this_.linearPrime(i)
       }
     }
 
     const activationFunction = primes[activation]
     // console.log(activationFunction);
-    
-    return  activationFunction(inputs)
+
+    return activationFunction(inputs)
 
   }
 
@@ -519,3 +555,4 @@ class Savage_model {
 }
 
 module.exports = { Savage, Savage_model }
+
