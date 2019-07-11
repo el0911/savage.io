@@ -478,8 +478,34 @@ class Savage_model {
     console.log(this.model);
 
     console.log('model loaded into object!')
+  }
 
 
+  splitData(data,percentage){
+    const train =[]
+    const test = []
+
+    
+
+    for (let i = 0; i < data.length; i++) {
+      const element = data[i];
+
+      const rand = Math.random()
+
+      if(rand<percentage){
+          if(element){
+            test.push(element)
+          }
+      }
+      else{
+         if(element){
+          train.push(element)
+         }
+      }
+      
+    }
+    
+    return [train,test]
   }
 
   feedForWard(input) {

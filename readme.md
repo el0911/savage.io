@@ -157,15 +157,15 @@ console.log(ans);
 
 Things to do on this project
 
-* Implement function to load csv and txt files
+* Implement function to load csv and txt files->>DONE
 * Implement function to download dataset into memory 
 * Add RNN,CNN
 * Add leky relu
 
 Tutorial Projects
 
-* Build a even odd number classifier 
-* Solve a regression problem 
+* Build a even odd number classifier ->>DONE
+* Solve a regression problem->>DONE
 * Build number image classifier 
 * Work on war thanks(finally!!!)-< this project is gonna b special >
 * work on time series project
